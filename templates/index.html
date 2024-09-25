@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Means Clustering Visualization | Laya Dang</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+
+</head>
+<body>
+    <h1>K-Means Clustering Visualization</h1>
+
+        <form method="POST">
+        <div class="clusters-number">
+
+            <label for="num_k"> <h3>Number of clusters: </h3></label>
+            <input name="num_k" id="num_k" type="number" min="2">
+
+            <label for="init_method"><h3>Initialization method:</h3></label>
+            <select name="init_method" id="init_method">
+                <option value="random">Random</option>
+                <option value="farthest-first">Farthest First</option>
+                <option value="k-means-pp">K-Means++</option>
+                <option value="manual">Manual</option>
+            </select>
+        </div>
+
+    <div class="initialization-options">
+            <div class="buttons">
+                <!-- <button type="submit"><h3>Steps to K-means</h3></button> -->
+                <input type="submit" name="not-final" value="Steps to K-means"></input>
+                <input type="submit" name="final" value="See Final Convergence"></input>
+                <input type="submit" name="reset-data" value="Generate New Dataset"></input>
+                <input type="submit" name="reset" value="Reset"></input>
+            </div>
+        </form>
+    </div>
+    
+    <div class="results">
+        {% if show_image %}
+            <img src="{{ url_for('static', filename='kmeans.gif') }}?{{ timestamp }}" alt="K-Means Clustering GIF">
+        {% endif %}
+    </div>
+</body>
+</html>

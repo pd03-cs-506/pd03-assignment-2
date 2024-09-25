@@ -1,9 +1,6 @@
-FLASK_APP = app.py
-FLASK := FLASK_APP=$(FLASK_APP) env/bin/flask
+install:
+	python -m venv venv
+	/venv/bin/pip install requirements.txt
 
-.PHONY: run
 run:
-    FLASK_ENV=development $(FLASK) run
-
-run-production:
-    FLASK_ENV=production $(FLASK) run
+	flask --app app --debug run --port 3000
