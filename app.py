@@ -17,6 +17,7 @@ def home():
     init_method = 'random'
     num_k = 2
     final = 0
+    reset_data = 0
     show_image = False 
 
     if request.method == "POST":
@@ -28,11 +29,21 @@ def home():
         elif 'final' in request.form:
             final = 1
 
+        if 'reset-data' in request.form:
+            reset_data = 1
+            final = 1
+
+        if 'reset' in request.form:
+            reset_data = 1
+            final = 1
+            num_k = 1
+            return redirect(url_for('home', show_image=False))
+
         print(int(num_k))
         print(init_method)
 
         # def generate_image(dataset, k, init_method, reset_data, final):
-        generate_image(dataset, int(num_k), init_method, 0, final)
+        generate_image(dataset, int(num_k), init_method, reset_data, final)
         
         return redirect(url_for('home', show_image=True))
 

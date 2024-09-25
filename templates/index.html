@@ -15,7 +15,7 @@
         <div class="clusters-number">
 
             <label for="num_k"> <h3>Number of clusters: </h3></label>
-            <input name="num_k" id="num_k" type="number" min="2">
+            <input name="num_k" id="num_k" type="number" min="2" value=2>
 
             <label for="init_method"><h3>Initialization method:</h3></label>
             <select name="init_method" id="init_method">
@@ -36,7 +36,7 @@
             </div>
         </form>
     </div>
-    
+
     <div class="results">
         {% if show_image %}
             <img src="{{ url_for('static', filename='kmeans.gif') }}?{{ timestamp }}" alt="K-Means Clustering GIF">

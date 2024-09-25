@@ -43,21 +43,37 @@ class KMeans():
 
         # farthest first: select random first point, then select ones furthest away, and so on
         if self.init_method == 'farthest-first':
-            init_index = np.random.choice(len(self.data), size=1, replace=False)
+            # initial random center
+            centers = [[random.uniform(-10, 10), random.uniform(-10, 10)]] 
+            
+            # find rest of centers
+            for i in range(self.k-1):
+                
+                dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
+                # select the point that is farthest from its nearest center
+                next_center = self.data[np.argmax(dists)]
+                centers.append(next_center)
 
         # weighted by distance
         elif self.init_method == 'k-means-pp':
-            init_index = np.random.choice(len(self.data), size=1, replace=False)
-            indices = []
+            centers = [[random.uniform(-10, 10), random.uniform(-10, 10)]] 
+            for i in range(self.k-1):
+                # find rest of points
+                dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
+                prob = dists / dists.sum()
+                next_center = self.data[np.random.choice(len(self.data), p=prob)]
+                centers.append(next_center)
+
 
         # user click on points
         elif self.init_method == 'manual':
-            indices = []
+            centers = []
 
         else:
             # k random indices of centers
-            indices = np.random.choice(len(self.data), size=self.k, replace=False)
-        return self.data[indices]
+            centers = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(self.k)])
+
+        return centers
 
     def make_clusters(self, centers):
         # assign each data point to its closest center
@@ -116,12 +132,14 @@ class KMeans():
         return
 
 # centers = [[0, 0], [2, 2], [-3, 2], [2, -4]]
-dataset = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(300)])
+def new_dataset():
+    dataset = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(300)])
+    return dataset
 
 def generate_image(dataset, k, init_method, reset_data, final):
     if (reset_data == 1):
         # centers = [[0, 0], [2, 2], [-3, 2], [2, -4]]
-        dataset = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(300)])
+        dataset = new_dataset()
 
     kmeans = KMeans(dataset, k, init_method)
     kmeans.lloyds()
@@ -143,4 +161,4 @@ def generate_image(dataset, k, init_method, reset_data, final):
             duration=500
         )
 
-generate_image(dataset, 2, 'random', 0, 1)
+generate_image(new_dataset(), 2, 'random', 0, 1)
