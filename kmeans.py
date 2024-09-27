@@ -2,163 +2,128 @@ import numpy as np
 from PIL import Image as im
 import matplotlib
 import matplotlib.pyplot as plt
-import sklearn.datasets as datasets
-import random 
+import random
+from io import BytesIO  # Import BytesIO for in-memory operations
 
-matplotlib.use('Agg') 
+matplotlib.use('Agg')  # Use 'Agg' backend for non-GUI rendering
 
-class KMeans():
-    def __init__(self, data, k, init_method):
-        # randomly generated dataset of points
+class KMeans:
+    def __init__(self, data, k, init_method, centroids=None):
         self.data = data
-
-        # number of centers
         self.k = k
-
-        # center initialization method, string of either 'random' , 'farthest_first', 'k-means-pp', or 'manual'
         self.init_method = init_method
-
-        # assigment for each point to a cluster (defined as a center)
+        self.centroids = centroids  # For manual initialization
         self.assignment = [-1 for _ in range(len(data))]
-
         self.snaps = []
 
     def snap(self, centers):
-        TEMPFILE = "temp.png"
+        # Create an in-memory file using BytesIO
+        buffer = BytesIO()
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(6.6, 6.6))
         ax.scatter(self.data[:, 0], self.data[:, 1], c=self.assignment)
         ax.scatter(centers[:, 0], centers[:, 1], c='r', marker='x')
-        fig.savefig(TEMPFILE)
-        plt.close()
-        self.snaps.append(im.fromarray(np.asarray(im.open(TEMPFILE))))
 
-    def isunassigned(self, i):
-        # check if data point is not assigned to a center
-        return self.assignment[i] == -1
+        # Save the plot to the in-memory file
+        fig.savefig(buffer, format='png')
+        plt.close(fig)  # Close the plot to avoid memory leaks
+
+        # Seek to the beginning of the in-memory file and open it as an image
+        buffer.seek(0)
+        self.snaps.append(im.open(buffer))
 
     def initialize(self):
-        # INITIALIZATION METHODS
-        # need to implement: random, farthest-first, k-means-pp, and user input (manual)
+        if self.centroids is not None and len(self.centroids) == self.k:
+            print("applying manual init")
+            centers = np.array(self.centroids)
+            print(f"centers are {centers}")
 
-        # farthest first: select random first point, then select ones furthest away, and so on
-        if self.init_method == 'farthest-first':
-            # initial random center
-            centers = [[random.uniform(-10, 10), random.uniform(-10, 10)]] 
-            
-            # find rest of centers
-            for i in range(self.k-1):
-                
+        elif self.init_method == 'farthest-first':
+            centers = [[random.uniform(-10, 10)] * 2] 
+            for _ in range(self.k - 1):
                 dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
-                # select the point that is farthest from its nearest center
                 next_center = self.data[np.argmax(dists)]
                 centers.append(next_center)
-
-        # weighted by distance
+                
         elif self.init_method == 'k-means-pp':
-            centers = [[random.uniform(-10, 10), random.uniform(-10, 10)]] 
-            for i in range(self.k-1):
-                # find rest of points
+            centers = [self.data[random.randint(0, len(self.data) - 1)]]  # First random center
+            for _ in range(self.k - 1):
                 dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
                 prob = dists / dists.sum()
                 next_center = self.data[np.random.choice(len(self.data), p=prob)]
                 centers.append(next_center)
 
-
-        # user click on points
-        elif self.init_method == 'manual':
-            centers = []
-
-        else:
-            # k random indices of centers
+        else:  # random initialization
             centers = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(self.k)])
 
-        return centers
+        return np.array(centers)
 
     def make_clusters(self, centers):
-        # assign each data point to its closest center
         for i in range(len(self.data)):
-            min_dist = float('inf') # large number
-
-            # loop through each center
+            min_dist = float('inf')
             for j in range(self.k):
                 dist = self.dist(centers[j], self.data[i])
-                # find min dist
                 if dist < min_dist:
                     min_dist = dist
                     self.assignment[i] = j
 
     def compute_centers(self):
-        # compute new centers as the mean of all assigned points
         new_centers = []
         for i in range(self.k):
             cluster = [self.data[j] for j in range(len(self.assignment)) if self.assignment[j] == i]
             if cluster:
                 new_centers.append(np.mean(cluster, axis=0))
             else:
-                new_centers.append(np.random.randn(2))  # if no points, assign random point
+                new_centers.append(np.random.randn(2))  # Handle empty clusters
         return np.array(new_centers)
 
     def unassign(self):
         self.assignment = [-1 for _ in range(len(self.data))]
 
     def are_diff(self, centers, new_centers):
-        # Check if the centers have changed
         return not np.array_equal(centers, new_centers)
 
     def dist(self, x, y):
-        # Euclidean distance
         return np.sqrt(np.sum((x - y) ** 2))
 
     def lloyds(self):
         centers = self.initialize()
-
-        # Assign each point to centers
         self.make_clusters(centers)
-
-        # Compute center average
         new_centers = self.compute_centers()
-
         self.snap(new_centers)
 
-        # Compare if new center is same as before
         while self.are_diff(centers, new_centers):
-            self.unassign()  # Unassign at the beginning
+            self.unassign()
             centers = new_centers
             self.make_clusters(centers)
             new_centers = self.compute_centers()
             self.snap(new_centers)
-
         return
 
-# centers = [[0, 0], [2, 2], [-3, 2], [2, -4]]
 def new_dataset():
-    dataset = np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(300)])
-    return dataset
+    return np.array([[random.uniform(-10, 10), random.uniform(-10, 10)] for _ in range(300)])
 
-def generate_image(dataset, k, init_method, reset_data, final):
-    if (reset_data == 1):
-        # centers = [[0, 0], [2, 2], [-3, 2], [2, -4]]
+
+def generate_image(dataset, k, init_method, reset_data, final, centroids=None):
+    if reset_data == 1:
         dataset = new_dataset()
 
-    kmeans = KMeans(dataset, k, init_method)
-    kmeans.lloyds()
+    # Pass user-selected centroids if provided (for manual initialization)
+    kmeans = KMeans(dataset, k, init_method, centroids)
+    kmeans.lloyds()  # Run the K-Means algorithm
     images = kmeans.snaps
 
-    if (final == 1): 
-        return images[-1].save(
+    # Save the final convergence or the steps in a GIF
+    if final == 1:
+        images[-1].save(
             'static/kmeans.gif',
-            optimize=False,
-            save_all=False,
             format='PNG'
         )
-    else: 
-        return images[0].save(
+    else:
+        images[0].save(
             'static/kmeans.gif',
-            optimize=False,
             save_all=True,
             append_images=images[1:],
-            duration=500
+            duration=500,
+            loop=0
         )
-
-generate_image(new_dataset(), 2, 'random', 0, 1)

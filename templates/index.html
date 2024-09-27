@@ -6,14 +6,12 @@
     <title>K-Means Clustering Visualization | Laya Dang</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-
 </head>
 <body>
     <h1>K-Means Clustering Visualization</h1>
 
-        <form method="POST">
+    <form method="POST">
         <div class="clusters-number">
-
             <label for="num_k"> <h3>Number of clusters: </h3></label>
             <input name="num_k" id="num_k" type="number" min="2" value=2>
 
@@ -26,15 +24,19 @@
             </select>
         </div>
 
-    <div class="initialization-options">
+        <div class="initialization-options">
             <div class="buttons">
-                <!-- <button type="submit"><h3>Steps to K-means</h3></button> -->
                 <input type="submit" name="not-final" value="Steps to K-means"></input>
                 <input type="submit" name="final" value="See Final Convergence"></input>
                 <input type="submit" name="reset-data" value="Generate New Dataset"></input>
                 <input type="submit" name="reset" value="Reset"></input>
             </div>
-        </form>
+        </div>
+    </form>
+
+    <div class="manual-initialization" id="manual-initialization" style="display:none; text-align:center;">
+        <h3>Select initial centroids</h3>
+        <canvas id="manualCanvas" width="500" height="500" style="border:1px solid black;"></canvas>
     </div>
 
     <div class="results">
@@ -42,5 +44,78 @@
             <img src="{{ url_for('static', filename='kmeans.gif') }}?{{ timestamp }}" alt="K-Means Clustering GIF">
         {% endif %}
     </div>
+
+    <script>
+        const initMethod = document.getElementById('init_method');
+        const manualInitialization = document.getElementById('manual-initialization');
+        const canvas = document.getElementById('manualCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasSize = 430; 
+        const dataRangeMin = -10;
+        const dataRangeMax = 10;
+        let selectedPoints = [];
+    
+        function mapToDataRange(value, canvasSize, dataMin, dataMax) {
+            return dataMin + ((value / canvasSize) * (dataMax - dataMin));
+        }
+    
+        initMethod.addEventListener('change', function() {
+            if (this.value === 'manual') {
+                manualInitialization.style.display = 'block';
+            } else {
+                manualInitialization.style.display = 'none';
+                selectedPoints = [];  // Clear selected points if method changes
+                clearCanvas();
+            }
+        });
+    
+        canvas.addEventListener('click', function(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Invert the y-coordinate
+    const invertedY = canvasSize - y;
+
+    // Map the click coordinates (x, invertedY) to the data range [-10, 10]
+    const dataX = mapToDataRange(x, canvasSize, dataRangeMin, dataRangeMax);
+    const dataY = mapToDataRange(invertedY, canvasSize, dataRangeMin, dataRangeMax);
+
+    // Draw the point on the canvas
+    drawPoint(x, y);  // Use original y for drawing
+    selectedPoints.push([dataX, dataY]);  // Store the mapped data points
+
+    // Print out the selected points for debugging
+    console.log("Selected Points: ", selectedPoints);
+
+    // Send selected points to the server if all k points are selected
+    const numK = parseInt(document.getElementById('num_k').value);
+    if (selectedPoints.length === numK) {
+        sendSelectedPoints(selectedPoints);
+    }
+});
+    
+        function drawPoint(x, y) {
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    
+        function sendSelectedPoints(points) {
+            fetch("/select-points", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ points: points })
+            });
+        }
+    </script>
+    
 </body>
 </html>
