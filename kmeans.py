@@ -3,9 +3,9 @@ from PIL import Image as im
 import matplotlib
 import matplotlib.pyplot as plt
 import random
-from io import BytesIO  # Import BytesIO for in-memory operations
+from io import BytesIO  
 
-matplotlib.use('Agg')  # Use 'Agg' backend for non-GUI rendering
+matplotlib.use('Agg') 
 
 class KMeans:
     def __init__(self, data, k, init_method, centroids=None):
@@ -17,18 +17,15 @@ class KMeans:
         self.snaps = []
 
     def snap(self, centers):
-        # Create an in-memory file using BytesIO
         buffer = BytesIO()
 
         fig, ax = plt.subplots(figsize=(6.6, 6.6))
         ax.scatter(self.data[:, 0], self.data[:, 1], c=self.assignment)
         ax.scatter(centers[:, 0], centers[:, 1], c='r', marker='x')
 
-        # Save the plot to the in-memory file
         fig.savefig(buffer, format='png')
-        plt.close(fig)  # Close the plot to avoid memory leaks
+        plt.close(fig) 
 
-        # Seek to the beginning of the in-memory file and open it as an image
         buffer.seek(0)
         self.snaps.append(im.open(buffer))
 
@@ -39,14 +36,14 @@ class KMeans:
             print(f"centers are {centers}")
 
         elif self.init_method == 'farthest-first':
-            centers = [[random.uniform(-10, 10)] * 2] 
+            centers = [[random.uniform(-10, 10)] * 2] # first random center
             for _ in range(self.k - 1):
                 dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
                 next_center = self.data[np.argmax(dists)]
                 centers.append(next_center)
                 
         elif self.init_method == 'k-means-pp':
-            centers = [self.data[random.randint(0, len(self.data) - 1)]]  # First random center
+            centers = [[random.uniform(-10, 10)] * 2] # first random center
             for _ in range(self.k - 1):
                 dists = np.array([min([self.dist(point, center) for center in centers]) for point in self.data])
                 prob = dists / dists.sum()
@@ -74,7 +71,7 @@ class KMeans:
             if cluster:
                 new_centers.append(np.mean(cluster, axis=0))
             else:
-                new_centers.append(np.random.randn(2))  # Handle empty clusters
+                new_centers.append(np.random.randn(2))
         return np.array(new_centers)
 
     def unassign(self):
@@ -108,12 +105,10 @@ def generate_image(dataset, k, init_method, reset_data, final, centroids=None):
     if reset_data == 1:
         dataset = new_dataset()
 
-    # Pass user-selected centroids if provided (for manual initialization)
     kmeans = KMeans(dataset, k, init_method, centroids)
-    kmeans.lloyds()  # Run the K-Means algorithm
+    kmeans.lloyds() 
     images = kmeans.snaps
 
-    # Save the final convergence or the steps in a GIF
     if final == 1:
         images[-1].save(
             'static/kmeans.gif',
