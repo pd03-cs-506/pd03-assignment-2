@@ -29,4 +29,13 @@ jobs:
     - name: Run server
       run: |
         source venv/bin/activate
-        make run
+        make run &
+        sleep 5
+
+    - name: Test the server
+      run: |
+        curl --fail http://localhost:3000/
+    
+    - name: Stop the server
+      run: |
+        kill $(jobs -p)
