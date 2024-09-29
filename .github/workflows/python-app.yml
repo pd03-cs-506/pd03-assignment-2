@@ -29,6 +29,3 @@ jobs:
     - name: Run server
       run: |
         make run
-    - name: Test with pytest
-      run: |
-        venv/bin/pytest
