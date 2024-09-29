@@ -28,4 +28,5 @@ jobs:
     
     - name: Run server
       run: |
+        source venv/bin/activate
         make run
